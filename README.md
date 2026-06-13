@@ -59,10 +59,11 @@ vercel --prod        # Produktiv-Deploy
 | Superclarendon     | Body / Überschriften     | **Adobe Fonts (Typekit-Kit `hfi7ivv`)**  |
 | Boska Variable     | (deklariert)             | self-hosted unter `assets/fonts/`        |
 
-> **Wichtig nach dem Deploy:** Das Adobe-Fonts-Kit `hfi7ivv` ist domaingebunden.
-> Damit *Superclarendon* auch unter der neuen (Vercel-)Domain lädt, die Domain in den
-> Adobe-Fonts-Kit-Einstellungen als erlaubte Domain hinzufügen. Andernfalls greift der
-> Fallback `sans-serif`.
+> *Superclarendon* lädt bereits korrekt unter der `*.vercel.app`-Domain (verifiziert –
+> das Kit `hfi7ivv` ist nicht domaingesperrt). Falls du später eine **eigene Domain**
+> (z. B. `niemalsmusik.de`) anbindest und dort statt Superclarendon der Fallback
+> `sans-serif` erscheint, die Domain in den Adobe-Fonts-Kit-Einstellungen als erlaubte
+> Domain ergänzen.
 
 ## Hinweise
 
