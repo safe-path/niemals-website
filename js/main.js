@@ -101,7 +101,7 @@
     hideLoaderImmediately();
     if (hasGSAP) {
       gsap.set(
-        ".screen_bg, .scroll_img, .scroll_copy_inner, .music_content_inner, .music_image_wrapper, .footer_top-wrapper, .footer_line-divider, .rl_footer4_bottom-wrapper",
+        ".screen_bg, .navbar_inner, .scroll_img, .scroll_copy_inner, .music_content_inner, .music_image_wrapper, .footer_top-wrapper, .footer_line-divider, .rl_footer4_bottom-wrapper",
         { clearProps: "opacity,transform" }
       );
       gsap.set('.header_text[style*="opacity"]', { opacity: 1 });
@@ -119,26 +119,38 @@
       return;
     }
 
-    /* --- Watchdog: if the intro hasn't finished in time (e.g. the tab
-       was backgrounded and rAF was paused, or a tween errored), drop the
-       curtain and reveal everything so the page is never stuck. -------- */
-    var watchdog = window.setTimeout(function () {
-      if (!document.body.classList.contains("nm-loaded")) forceReveal();
-    }, 3500);
-    var clearWatchdog = function () {
-      window.clearTimeout(watchdog);
-    };
-
     /* --- Build the loader letters -------------------------------------- */
     var loaderMark = document.querySelector(".nm-loader__mark");
 
     /* --- Intro timeline ------------------------------------------------- */
-    var intro = gsap.timeline({
-      onComplete: function () {
-        clearWatchdog();
-        document.body.classList.add("nm-loaded");
-        if (ST) ST.refresh();
-      },
+    var intro = gsap.timeline({ onComplete: settle });
+
+    var settled = false;
+    function settle() {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(watchdog);
+      document.body.classList.add("nm-loaded");
+      if (ST) ST.refresh();
+    }
+
+    /* If the intro can't run to completion on its own — a tab opened in the
+       background pauses requestAnimationFrame, freezing GSAP's ticker, or a
+       tween throws — snap the timeline to its finished state so the navbar,
+       hero and paper background are NEVER stuck in their hidden start state. */
+    function catchUpIntro() {
+      if (settled) return;
+      intro.progress(1); // jump every tween to its end (fires onComplete)
+      settle(); // belt-and-suspenders if the progress() events were suppressed
+    }
+
+    /* --- Watchdog + visibility catch-up -------------------------------- */
+    var watchdog = window.setTimeout(catchUpIntro, 3500);
+    document.addEventListener("visibilitychange", function () {
+      if (!document.hidden) catchUpIntro();
+    });
+    window.addEventListener("pageshow", function (e) {
+      if (e.persisted) catchUpIntro();
     });
 
     if (loaderMark) {
