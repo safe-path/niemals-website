@@ -1,0 +1,166 @@
+/* =========================================================================
+   NIEMALS – custom layer
+   Sits on top of the original Webflow stylesheet (niemals.css).
+   Only adds: GSAP initial states (anti-FOUC), mobile nav behaviour
+   (the Webflow JS that used to drive it is gone), the intro curtain
+   and reduced-motion fallbacks. No design tokens are changed here –
+   colours, shadows and type all come from niemals.css.
+   ========================================================================= */
+
+:root {
+  --nm-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* -------------------------------------------------------------------------
+   Intro curtain – a short floral-white veil that lifts on load.
+   ------------------------------------------------------------------------- */
+.nm-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background-color: var(--floral-white, #fffff7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.nm-loader__mark {
+  font-family: Georgia, Times, "Times New Roman", serif;
+  font-size: clamp(48px, 9vw, 96px);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--pale-violet-red, #b6bd8f);
+  opacity: 0.9;
+}
+.nm-loader__mark span { display: inline-block; }
+/* Once the page is done we drop the loader out of the DOM flow entirely */
+.nm-loaded .nm-loader { display: none; }
+
+/* -------------------------------------------------------------------------
+   Anti-FOUC initial states.
+   Applied only when JS is active (html.js-anim). main.js animates these in
+   and, if GSAP fails to load, removes .js-anim so everything is visible.
+   The big "NIEMALS" overlay letters already carry inline opacity:0 from the
+   original markup, so they need no help here.
+   ------------------------------------------------------------------------- */
+.js-anim .scroll_copy_inner,
+.js-anim .music_content_inner,
+.js-anim .music_image_wrapper,
+.js-anim .footer_top-wrapper,
+.js-anim .footer_line-divider,
+.js-anim .rl_footer4_bottom-wrapper {
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.js-anim .scroll_img {
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+/* The fixed paper background fades in under everything */
+.js-anim .screen_bg {
+  opacity: 0;
+}
+
+/* -------------------------------------------------------------------------
+   Mobile navigation.
+   data-collapse="medium" => the hamburger shows at <=991px.
+   Webflow's runtime used to open/close the menu; we replicate it.
+   ------------------------------------------------------------------------- */
+@media screen and (max-width: 991px) {
+  .navbar_menu.w-nav-menu {
+    position: absolute;
+    top: calc(100% + 0.6rem);
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 50;
+  }
+  /* Closed by default */
+  .navbar_wrapper:not(.nm-nav-open) .navbar_menu.w-nav-menu {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-12px);
+  }
+  .navbar_wrapper.nm-nav-open .navbar_menu.w-nav-menu {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+  /* Make the inner panel use the styled (radius/gradient/shadow) look */
+  .navbar_menu_inner {
+    width: 100%;
+  }
+}
+
+/* Hamburger -> X transform (driven by .nm-nav-open on the wrapper) */
+.menu-icon_component {
+  transition: transform 0.3s var(--nm-ease);
+}
+.menu-icon_line-top,
+.menu-icon_line-middle,
+.menu-icon_line-bottom {
+  transition: transform 0.3s var(--nm-ease), opacity 0.2s ease;
+  transform-origin: center;
+}
+.navbar_wrapper.nm-nav-open .menu-icon_line-top {
+  transform: translateY(8px) rotate(45deg);
+}
+.navbar_wrapper.nm-nav-open .menu-icon_line-bottom {
+  transform: translateY(-8px) rotate(-45deg);
+}
+.navbar_wrapper.nm-nav-open .menu-icon_line-middle {
+  opacity: 0;
+  transform: scaleX(0);
+}
+
+/* Lock scroll while the mobile menu is open */
+body.nm-menu-lock {
+  overflow: hidden;
+}
+
+/* -------------------------------------------------------------------------
+   Subtle scroll state for the floating navbar pill
+   ------------------------------------------------------------------------- */
+.navbar_inner {
+  transition: box-shadow 0.4s var(--nm-ease), background-color 0.4s var(--nm-ease);
+}
+.navbar_wrapper.nm-scrolled .navbar_inner {
+  box-shadow: 0 10px 40px #0000002e;
+}
+
+/* -------------------------------------------------------------------------
+   Nice-to-have: smooth anchor scrolling + link hover lift on the
+   video "Zum Video" arrow (purely additive, matches existing motion feel)
+   ------------------------------------------------------------------------- */
+html {
+  scroll-behavior: smooth;
+}
+.walsh-icon-arrow {
+  transition: transform 0.3s var(--nm-ease);
+}
+.link_container:hover .walsh-icon-arrow {
+  transform: translateX(6px);
+}
+
+/* -------------------------------------------------------------------------
+   Reduced motion: show everything, no transforms, instant.
+   ------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .js-anim .scroll_copy_inner,
+  .js-anim .music_content_inner,
+  .js-anim .music_image_wrapper,
+  .js-anim .footer_top-wrapper,
+  .js-anim .footer_line-divider,
+  .js-anim .rl_footer4_bottom-wrapper,
+  .js-anim .scroll_img,
+  .js-anim .screen_bg {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .nm-loader { display: none !important; }
+}
